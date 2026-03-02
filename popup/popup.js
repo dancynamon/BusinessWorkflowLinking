@@ -100,11 +100,12 @@ async function renderGroups() {
 
   // Bind linked page clicks
   container.querySelectorAll('.linked-page[data-url]').forEach((el) => {
-    el.addEventListener('click', (e) => {
+    el.addEventListener('click', async (e) => {
       if (e.target.closest('.linked-page-remove')) return;
       const url = el.dataset.url;
       if (url !== currentTab.url) {
-        chrome.tabs.create({ url });
+        const card = el.closest('.group-card');
+        await openInTabGroup(url, card.dataset.groupName, card.dataset.groupColor);
         window.close();
       }
     });
@@ -147,7 +148,7 @@ function renderGroupCard(group) {
   const currentInGroup = group.pages.find((p) => p.url === currentTab.url);
 
   return `
-    <div class="group-card" data-group-id="${group.id}">
+    <div class="group-card" data-group-id="${group.id}" data-group-name="${escapeAttr(group.name)}" data-group-color="${escapeAttr(group.color)}">
       <div class="group-header" data-group-id="${group.id}">
         <span class="group-color-dot" style="background: ${group.color}"></span>
         <span class="group-name">${escapeHtml(group.name)}</span>
@@ -393,6 +394,45 @@ function showModal(title, bodyHtml) {
 
 function hideModal() {
   document.getElementById('modal-overlay').style.display = 'none';
+}
+
+// --- Chrome tab grouping ---
+
+const HEX_TO_CHROME_COLOR = {
+  '#4285f4': 'blue',
+  '#ea4335': 'red',
+  '#fbbc04': 'yellow',
+  '#34a853': 'green',
+  '#ff6d01': 'orange',
+  '#46bdc6': 'cyan',
+  '#7b61ff': 'purple',
+  '#e91e63': 'pink',
+  '#795548': 'grey',
+  '#607d8b': 'grey',
+};
+
+function chromeColor(hex) {
+  return HEX_TO_CHROME_COLOR[hex] || 'grey';
+}
+
+async function openInTabGroup(url, groupName, groupColor) {
+  const newTab = await chrome.tabs.create({ url });
+
+  // Reuse an existing Chrome tab group with the same name in this window
+  const existing = await chrome.tabGroups.query({
+    title: groupName,
+    windowId: currentTab.windowId,
+  });
+
+  if (existing.length > 0) {
+    await chrome.tabs.group({ tabIds: [currentTab.id, newTab.id], groupId: existing[0].id });
+  } else {
+    const chromeGroupId = await chrome.tabs.group({ tabIds: [currentTab.id, newTab.id] });
+    await chrome.tabGroups.update(chromeGroupId, {
+      title: groupName,
+      color: chromeColor(groupColor),
+    });
+  }
 }
 
 // --- Utilities ---
