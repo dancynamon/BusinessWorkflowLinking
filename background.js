@@ -121,6 +121,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 // --- Message handling from popup ---
 
+const HEX_TO_CHROME_COLOR = {
+  '#4285f4': 'blue',
+  '#ea4335': 'red',
+  '#fbbc04': 'yellow',
+  '#34a853': 'green',
+  '#ff6d01': 'orange',
+  '#46bdc6': 'cyan',
+  '#7b61ff': 'purple',
+  '#e91e63': 'pink',
+  '#795548': 'grey',
+  '#607d8b': 'grey',
+};
+
+function chromeColor(hex) {
+  return HEX_TO_CHROME_COLOR[hex] || 'grey';
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'rebuildContextMenu') {
     rebuildContextMenu().then(() => sendResponse({ ok: true }));
@@ -131,6 +148,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (tab) updateBadge(tab.id, tab.url);
       sendResponse({ ok: true });
     });
+    return true;
+  }
+  if (message.type === 'openInTabGroup') {
+    (async () => {
+      const { url, groupName, groupColor, sourceTabId, windowId } = message;
+      const newTab = await chrome.tabs.create({ url });
+
+      // Reuse an existing Chrome tab group with the same name in this window
+      const existing = await chrome.tabGroups.query({ title: groupName, windowId });
+
+      if (existing.length > 0) {
+        await chrome.tabs.group({ tabIds: [sourceTabId, newTab.id], groupId: existing[0].id });
+      } else {
+        const chromeGroupId = await chrome.tabs.group({ tabIds: [sourceTabId, newTab.id] });
+        await chrome.tabGroups.update(chromeGroupId, {
+          title: groupName,
+          color: chromeColor(groupColor),
+        });
+      }
+      sendResponse({ ok: true });
+    })();
     return true;
   }
 });

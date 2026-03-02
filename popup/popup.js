@@ -100,12 +100,20 @@ async function renderGroups() {
 
   // Bind linked page clicks
   container.querySelectorAll('.linked-page[data-url]').forEach((el) => {
-    el.addEventListener('click', async (e) => {
+    el.addEventListener('click', (e) => {
       if (e.target.closest('.linked-page-remove')) return;
       const url = el.dataset.url;
       if (url !== currentTab.url) {
         const card = el.closest('.group-card');
-        await openInTabGroup(url, card.dataset.groupName, card.dataset.groupColor);
+        // Send to background script which persists after popup closes
+        chrome.runtime.sendMessage({
+          type: 'openInTabGroup',
+          url,
+          groupName: card.dataset.groupName,
+          groupColor: card.dataset.groupColor,
+          sourceTabId: currentTab.id,
+          windowId: currentTab.windowId,
+        });
         window.close();
       }
     });
@@ -394,45 +402,6 @@ function showModal(title, bodyHtml) {
 
 function hideModal() {
   document.getElementById('modal-overlay').style.display = 'none';
-}
-
-// --- Chrome tab grouping ---
-
-const HEX_TO_CHROME_COLOR = {
-  '#4285f4': 'blue',
-  '#ea4335': 'red',
-  '#fbbc04': 'yellow',
-  '#34a853': 'green',
-  '#ff6d01': 'orange',
-  '#46bdc6': 'cyan',
-  '#7b61ff': 'purple',
-  '#e91e63': 'pink',
-  '#795548': 'grey',
-  '#607d8b': 'grey',
-};
-
-function chromeColor(hex) {
-  return HEX_TO_CHROME_COLOR[hex] || 'grey';
-}
-
-async function openInTabGroup(url, groupName, groupColor) {
-  const newTab = await chrome.tabs.create({ url });
-
-  // Reuse an existing Chrome tab group with the same name in this window
-  const existing = await chrome.tabGroups.query({
-    title: groupName,
-    windowId: currentTab.windowId,
-  });
-
-  if (existing.length > 0) {
-    await chrome.tabs.group({ tabIds: [currentTab.id, newTab.id], groupId: existing[0].id });
-  } else {
-    const chromeGroupId = await chrome.tabs.group({ tabIds: [currentTab.id, newTab.id] });
-    await chrome.tabGroups.update(chromeGroupId, {
-      title: groupName,
-      color: chromeColor(groupColor),
-    });
-  }
 }
 
 // --- Utilities ---
