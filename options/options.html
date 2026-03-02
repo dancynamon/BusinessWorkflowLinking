@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Linker Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <svg class="logo-icon" viewBox="0 0 24 24" width="24" height="24">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h1>Page Linker Settings</h1>
+    </header>
+
+    <!-- Storage setting -->
+    <section class="card">
+      <h2>Storage</h2>
+      <p class="desc">Choose where your link groups are stored.</p>
+
+      <div class="radio-group">
+        <label class="radio-card">
+          <input type="radio" name="storageType" value="local">
+          <div class="radio-content">
+            <strong>Local Storage</strong>
+            <span class="radio-desc">Data stays on this browser. More storage space, but no sync across devices.</span>
+          </div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="storageType" value="sync">
+          <div class="radio-content">
+            <strong>Sync Storage</strong>
+            <span class="radio-desc">Data syncs across all Chrome/Brave instances where you're signed in. Limited to ~100KB.</span>
+          </div>
+        </label>
+      </div>
+
+      <div id="migrate-warning" class="warning" style="display: none;">
+        <strong>Note:</strong> Changing storage type will migrate your existing data to the new location.
+      </div>
+
+      <button id="btn-save-storage" class="btn btn-primary">Save</button>
+      <span id="save-status" class="save-status"></span>
+    </section>
+
+    <!-- Data management -->
+    <section class="card">
+      <h2>Data</h2>
+      <p class="desc">Manage your link group data.</p>
+      <div class="btn-row">
+        <button id="btn-export" class="btn btn-secondary">Export Data</button>
+        <button id="btn-import" class="btn btn-secondary">Import Data</button>
+        <button id="btn-clear" class="btn btn-danger">Clear All Data</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display: none;">
+    </section>
+
+    <!-- Stats -->
+    <section class="card">
+      <h2>Statistics</h2>
+      <div class="stats-row">
+        <div class="stat">
+          <span class="stat-value" id="stat-groups">0</span>
+          <span class="stat-label">Link Groups</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="stat-pages">0</span>
+          <span class="stat-label">Linked Pages</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="stat-size">0 KB</span>
+          <span class="stat-label">Storage Used</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="card">
+      <h2>About</h2>
+      <p class="desc">Page Linker v1.0.0</p>
+      <p class="desc">Link web pages together across any site. Create groups to quickly navigate between related pages.</p>
+      <p class="desc"><strong>Keyboard shortcut:</strong> <kbd>Alt+L</kbd> to open popup</p>
+    </section>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>
