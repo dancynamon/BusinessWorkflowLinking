@@ -60,8 +60,17 @@ async function renderGroups() {
   const container = document.getElementById('groups-container');
   const emptyState = document.getElementById('empty-state');
 
-  const groups = await getGroupsForUrl(currentTab.url);
+  const allGroups = await getAllGroups();
   const searchBar = document.getElementById('search-bar');
+
+  // Sort: groups containing current page first
+  const groups = allGroups.sort((a, b) => {
+    const aHas = a.pages.some((p) => p.url === currentTab.url);
+    const bHas = b.pages.some((p) => p.url === currentTab.url);
+    if (aHas && !bHas) return -1;
+    if (!aHas && bHas) return 1;
+    return 0;
+  });
 
   if (groups.length === 0) {
     container.innerHTML = '';
