@@ -86,7 +86,7 @@ async function renderGroups() {
       if (e.target.closest('.linked-page-remove')) return;
       const url = el.dataset.url;
       if (url !== currentTab.url) {
-        chrome.tabs.update(currentTab.id, { url });
+        chrome.tabs.create({ url });
         window.close();
       }
     });
