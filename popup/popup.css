@@ -154,6 +154,40 @@ body {
   border-bottom: 1px solid #e8e8e8;
 }
 
+/* === Search bar === */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.search-icon {
+  color: #999;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  background: transparent;
+  color: #1a1a1a;
+}
+
+.search-input::placeholder {
+  color: #aaa;
+}
+
+.no-results {
+  text-align: center;
+  padding: 20px 16px;
+  color: #999;
+  font-size: 12.5px;
+}
+
 /* === Groups container === */
 .groups-container {
   padding: 4px 0;

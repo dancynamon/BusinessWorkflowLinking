@@ -17,6 +17,7 @@ const COLORS = [
 
 let currentTab = null;
 let expandedGroups = new Set();
+let searchQuery = '';
 
 // --- Init ---
 
@@ -60,15 +61,32 @@ async function renderGroups() {
   const emptyState = document.getElementById('empty-state');
 
   const groups = await getGroupsForUrl(currentTab.url);
+  const searchBar = document.getElementById('search-bar');
 
   if (groups.length === 0) {
     container.innerHTML = '';
+    searchBar.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
 
   emptyState.style.display = 'none';
-  container.innerHTML = groups.map((group) => renderGroupCard(group)).join('');
+  searchBar.style.display = 'flex';
+
+  const query = searchQuery.toLowerCase();
+  const filtered = query
+    ? groups.filter((group) =>
+        group.name.toLowerCase().includes(query) ||
+        group.pages.some((p) => (p.title || '').toLowerCase().includes(query))
+      )
+    : groups;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="no-results">No matching groups</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map((group) => renderGroupCard(group)).join('');
 
   // Bind group interactions
   container.querySelectorAll('.group-header').forEach((header) => {
@@ -247,6 +265,11 @@ function bindActions() {
   document.getElementById('btn-add-to-group').addEventListener('click', showAddToGroupModal);
   document.getElementById('btn-settings').addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
+  });
+
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderGroups();
   });
 }
 
