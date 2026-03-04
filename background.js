@@ -1,8 +1,11 @@
 import {
   getAllGroups,
   getGroupsForUrl,
+  getGroupById,
   createGroup,
   addPageToGroup,
+  getLastGroupId,
+  setLastGroupId,
 } from './storage.js';
 
 // --- Badge management ---
@@ -101,6 +104,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'pageLinkerNewGroup') {
     // Create a group with a default name, user can rename in popup
     const group = await createGroup(`Group ${Date.now()}`, '#4285f4', page);
+    await setLastGroupId(group.id);
     await rebuildContextMenu();
     updateBadge(tab.id, tab.url);
 
@@ -113,9 +117,37 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   } else if (info.menuItemId.startsWith('pageLinkerGroup_')) {
     const groupId = info.menuItemId.replace('pageLinkerGroup_', '');
     await addPageToGroup(groupId, page);
+    await setLastGroupId(groupId);
     updateBadge(tab.id, tab.url);
 
     chrome.runtime.sendMessage({ type: 'pageAdded', groupId }).catch(() => {});
+  }
+});
+
+// --- Keyboard shortcut commands ---
+
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'add-to-last-group') {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return;
+
+    const lastGroupId = await getLastGroupId();
+    if (!lastGroupId) return;
+
+    const group = await getGroupById(lastGroupId);
+    if (!group) return;
+
+    // Don't add if already in the group
+    if (group.pages.some((p) => p.url === tab.url)) return;
+
+    await addPageToGroup(lastGroupId, {
+      url: tab.url,
+      title: tab.title,
+      favicon: tab.favIconUrl || '',
+    });
+    await setLastGroupId(lastGroupId);
+    updateBadge(tab.id, tab.url);
+    await rebuildContextMenu();
   }
 });
 
@@ -150,9 +182,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  if (message.type === 'setLastGroup') {
+    setLastGroupId(message.groupId).then(() => sendResponse({ ok: true }));
+    return true;
+  }
   if (message.type === 'openInTabGroup') {
     (async () => {
-      const { url, groupName, groupColor, sourceTabId, windowId } = message;
+      const { url, groupId, groupName, groupColor, sourceTabId, windowId } = message;
+      if (groupId) await setLastGroupId(groupId);
       const newTab = await chrome.tabs.create({ url });
 
       // Reuse an existing Chrome tab group with the same name in this window

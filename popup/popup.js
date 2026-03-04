@@ -118,6 +118,7 @@ async function renderGroups() {
         chrome.runtime.sendMessage({
           type: 'openInTabGroup',
           url,
+          groupId: card.dataset.groupId,
           groupName: card.dataset.groupName,
           groupColor: card.dataset.groupColor,
           sourceTabId: currentTab.id,
@@ -214,6 +215,7 @@ function toggleGroup(groupId) {
     expandedGroups.delete(groupId);
   } else {
     expandedGroups.add(groupId);
+    chrome.runtime.sendMessage({ type: 'setLastGroup', groupId }).catch(() => {});
   }
   renderGroups();
 }
@@ -338,8 +340,9 @@ function showNewGroupModal() {
       favicon: currentTab.favIconUrl || '',
     };
 
-    await createGroup(name, selectedColor, page);
+    const newGroup = await createGroup(name, selectedColor, page);
     hideModal();
+    chrome.runtime.sendMessage({ type: 'setLastGroup', groupId: newGroup.id }).catch(() => {});
     notifyBackground();
     // Auto-expand the new group
     const groups = await getGroupsForUrl(currentTab.url);
@@ -390,6 +393,7 @@ async function showAddToGroupModal() {
       };
       await addPageToGroup(groupId, page);
       hideModal();
+      chrome.runtime.sendMessage({ type: 'setLastGroup', groupId }).catch(() => {});
       notifyBackground();
       expandedGroups.add(groupId);
       await renderGroups();

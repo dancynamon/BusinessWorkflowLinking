@@ -3,6 +3,7 @@
 
 const STORAGE_KEY = 'pageLinkerData';
 const SETTINGS_KEY = 'pageLinkerSettings';
+const LAST_GROUP_KEY = 'pageLinkerLastGroupId';
 
 function generateId() {
   return crypto.randomUUID();
@@ -163,6 +164,15 @@ async function getGroupById(groupId) {
   return data.groups[groupId] || null;
 }
 
+async function getLastGroupId() {
+  const result = await chrome.storage.local.get(LAST_GROUP_KEY);
+  return result[LAST_GROUP_KEY] || null;
+}
+
+async function setLastGroupId(groupId) {
+  await chrome.storage.local.set({ [LAST_GROUP_KEY]: groupId });
+}
+
 // Export for use as ES module in service worker and popup
 export {
   generateId,
@@ -180,4 +190,6 @@ export {
   getAllGroups,
   getGroupsForUrl,
   getGroupById,
+  getLastGroupId,
+  setLastGroupId,
 };
